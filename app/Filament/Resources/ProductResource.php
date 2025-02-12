@@ -34,10 +34,12 @@ class ProductResource extends Resource
                     ->numeric()
                     ->prefix('€'),
                 Forms\Components\TextInput::make('discounted_price')
-                    ->numeric(),
+                    ->numeric()
+                    ->prefix('€'),
                 Forms\Components\TextInput::make('stock')
                     ->required()
                     ->numeric()
+                    ->prefix('Qté')
                     ->default(0),
                 Forms\Components\Select::make('categories')
                     ->multiple()

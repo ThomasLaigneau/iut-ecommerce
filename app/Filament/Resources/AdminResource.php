@@ -2,21 +2,28 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
+use App\Enums\UserRole;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Hash;
+use App\Filament\Resources\AdminResource\Pages;
 
-class UserResource extends Resource
+class AdminResource extends Resource
 {
     protected static ?string $model = User::class;
+    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static ?string $navigationLabel = 'Administrateurs';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $modelLabel = 'Administrateur';
+    protected static ?string $pluralModelLabel = 'Administrateurs';
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->where('role', UserRole::ADMIN);
+    }
 
     public static function form(Form $form): Form
     {
@@ -32,13 +39,10 @@ class UserResource extends Resource
                 Forms\Components\DateTimePicker::make('email_verified_at'),
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->maxLength(255)
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                    ->dehydrated(fn ($state) => filled($state)),
-                Forms\Components\Select::make('role')
-                    ->required()
-                    ->options(collect(\App\Enums\UserRole::cases())->mapWithKeys(fn ($role) => [$role->value => $role->label()]))
-                    ->default(\App\Enums\UserRole::CUSTOMER)
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->required(fn (string $context): bool => $context === 'create'),
+                Forms\Components\Hidden::make('role')
+                    ->default(UserRole::ADMIN),
             ]);
     }
 
@@ -52,21 +56,8 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('role')
-                    ->searchable()
-                    ->badge()
-                    ->formatStateUsing(fn (\App\Enums\UserRole $state) => $state->label())
-                    ->color(fn (\App\Enums\UserRole $state) => match($state) {
-                        \App\Enums\UserRole::ADMIN => 'danger',
-                        \App\Enums\UserRole::CUSTOMER => 'success',
-                    }),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -84,19 +75,12 @@ class UserResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => Pages\ListAdmins::route('/'),
+            'create' => Pages\CreateAdmin::route('/create'),
+            'edit' => Pages\EditAdmin::route('/{record}/edit'),
         ];
     }
 }
